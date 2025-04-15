@@ -10,6 +10,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   eMail?: string;
+  avatarUrl?: string;
 }
 
 export default class UserStore {
@@ -21,42 +22,71 @@ export default class UserStore {
   }
 
   // actions
-  async getOwnUser() {
-    const [result, error] = (await resultOrError(
-      new Promise((resolve) =>
-        setTimeout(
-          () =>
-            resolve({
-              firstName: "Aria",
-              lastName: "Test",
-              eMail: "linda.bolt@osapiens.com"
-            }),
-          500
+  async getOwnUser(): Promise<ActionSuccess<User> | ActionError> {
+    try {
+      const [result, error] = (await resultOrError(
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                firstName: "Aria",
+                lastName: "Test",
+                eMail: "linda.bolt@osapiens.com",
+                avatarUrl: "https://example.com/avatar.jpg"
+              }),
+            500
+          )
         )
-      )
-    )) as ResultOrErrorResponse<User>;
+      )) as ResultOrErrorResponse<User>;
 
-    if (!!error) {
+      if (error) {
+        return {
+          status: ActionResultStatus.ERROR,
+          error
+        } as ActionError;
+      } else if (result) {
+        runInAction(() => {
+          this.user = result; // Corrected typo
+        });
+
+        return {
+          status: ActionResultStatus.SUCCESS,
+          result
+        } as ActionSuccess<User>;
+      } else {
+        return {
+          status: ActionResultStatus.ERROR,
+          error: "Unexpected error: No result returned."
+        } as ActionError;
+      }
+
+      // if (error) {
+      //   return {
+      //     status: ActionResultStatus.ERROR,
+      //     error
+      //   } as ActionError;
+      // }
+
+      // if (result) {
+      //   runInAction(() => {
+      //     this.user = result; // Corrected typo
+      //   });
+
+      //   return {
+      //     status: ActionResultStatus.SUCCESS,
+      //     result
+      //   } as ActionSuccess<User>;
+      // }
+
+      // return {
+      //   status: ActionResultStatus.ERROR,
+      //   error: "Unexpected error: No result returned."
+      // } as ActionError;
+    } catch (err) {
       return {
         status: ActionResultStatus.ERROR,
-        error
+        error: err
       } as ActionError;
     }
-
-    if (result) {
-      runInAction(() => {
-        this.urser = result;
-      });
-
-      return {
-        status: ActionResultStatus.SUCCESS,
-        result: result
-      } as ActionSuccess<User>;
-    }
-
-    return {
-      status: ActionResultStatus.ERROR,
-      error: "Something went wrong."
-    } as ActionError;
   }
 }
